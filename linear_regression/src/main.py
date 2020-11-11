@@ -1,13 +1,16 @@
 import csv
 import numpy as np
+from pathlib import Path
 
+
+data_folder = Path("linear_regression/data/")
 
 airline_delay_causes = []
 columns = []
 target_variable = "DEP_DELAY"
 target_col = []
 
-with open('2017.csv', newline='\n') as csv_file:
+with open(data_folder/'2017.csv', newline='\n') as csv_file:
 	csv_reader = csv.reader(csv_file, delimiter=',')
 	line_count = 0
 	for row in csv_reader:
