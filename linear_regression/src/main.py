@@ -1,17 +1,15 @@
 import csv
 import numpy as np
 import math 
-from pathlib import Path
 
-
-data_folder = Path("linear_regression/data/")
+data_folder = "linear_regression/data/"
 
 airline_delay_causes = []
 columns = []
 target_variable = "DEP_DELAY"
 target_col = []
 
-with open(data_folder/'2017.csv', newline='\n') as csv_file:
+with open(data_folder+'2017.csv', newline='\n') as csv_file:
 	csv_reader = csv.reader(csv_file, delimiter=',')
 	line_count = 0
 	for row in csv_reader:
@@ -22,27 +20,34 @@ with open(data_folder/'2017.csv', newline='\n') as csv_file:
 			airline_delay_causes.append(row)
 			line_count += 1
 
-empty_cols = []
-target_index = 0
-for col in columns:
-	if len(col) == 0:
-		empty_cols.append(columns.index(col))
-	if col == target_variable:
-		target_index = columns.index(col)
+print(columns)
 
-if len(empty_cols) > 0:
-	for col in empty_cols:
-		del columns[col]
-	del columns[target_index]
-	for row in airline_delay_causes:
-		for col in empty_cols:
-			del row[col]
-		target_col.append(row[target_index])
-		del row[target_index]
+# if len(empty_cols) > 0:
+# 	for col in empty_cols:
+# 		del columns[col]
+# 	del columns[target_index]
+# 	for row in airline_delay_causes:
+# 		for col in empty_cols:
+# 			del row[col]
+# 		target_col.append(row[target_index])
+# 		del row[target_index]
+# for i in range(len(columns)):
+# 	print(str(i) + " " + columns[i]+ " " + airline_delay_causes[1][i])
 
-airline_delay_causes = np.array(airline_delay_causes)
-columns = np.array(columns)
-target_col = np.array(target_col)
+target_index = 11
+columns_for_use = [1, 2, 9, 10, 12, 17, 19, 25, 26, 27, 28, 29]
+useful_data_X = []
+useful_data_Y = []
+for row in airline_delay_causes:
+	tmp = []
+	for col in columns_for_use:
+		if row[col] == "":
+			break
+		else:
+			tmp.append(float(row[col]))
+	if len(tmp) == len(columns_for_use):
+		useful_data_X.append(tmp)
+		useful_data_Y.append(row[target_index])
 
 def norm(V):
 	ans = 0
@@ -58,7 +63,7 @@ def sumvc(X, a):
 
 def sumvv(X, Y):
 	if len(X) != len(Y):
-		return Exception("Len of vectors should be same!")
+		raise Exception("Len of vectors should be same!")
 	ans = X.copy()
 	for i in range(len(Y)):
 		ans[i] += Y[i]
@@ -72,7 +77,7 @@ def subvc(X, a):
 
 def subvv(X, Y):
 	if len(X) != len(Y):
-		return Exception("Len of vectors should be same!")
+		raise Exception("Len of vectors should be same!")
 	ans = X.copy()
 	for i in range(len(Y)):
 		ans[i] -= Y[i]
@@ -86,7 +91,7 @@ def multvc(X, c):
 
 def multvv(X, Y):
 	if len(X) != len(Y):
-		return Exception("Len of vectors should be same!")
+		raise Exception("Len of vectors should be same!")
 	ans = X.copy()
 	for i in range(len(Y)):
 		ans[i] *= Y[i]
@@ -97,23 +102,23 @@ def summc(A, c):
 		return []
 	rows_A = len(A)
 	cols_A = len(A[0])
-	ans = A.copy()
+	ans = [[0 for row in range(cols_A)] for col in range(rows_A)]
 	for i in range(rows_A):
 		for j in range(cols_A):
-			ans[i][j] += c
+			ans[i][j] = A[i][j] + c
 	return ans
 
 def summm(A, B):
 	if len(A) == 0 or len(B) == 0:
 		return []
 	if len(A) != len(B) or len(A[0]) != len(B[0]):
-		return Exception("Dim of matrix should be same!")
+		raise Exception("Dim of matrix should be same!")
 	rows_A = len(A)
 	cols_B = len(B[0])
-	ans = A.copy()
+	ans = [[0 for row in range(cols_B)] for col in range(rows_A)]
 	for i in range(rows_A):
 		for j in range(cols_B):
-			ans[i][j] += B[i][j]
+			ans[i][j] = A[i][j] + B[i][j]
 	return ans
 
 def submc(A, c):
@@ -121,23 +126,23 @@ def submc(A, c):
 		return []
 	rows_A = len(A)
 	cols_A = len(A[0])
-	ans = A.copy()
+	ans = [[0 for row in range(cols_A)] for col in range(rows_A)]
 	for i in range(rows_A):
 		for j in range(cols_A):
-			ans[i][j] -= c
+			ans[i][j] = A[i][j] - c
 	return ans
 
 def submm(A, B):
 	if len(A) == 0 or len(B) == 0:
 		return []
 	if len(A) != len(B) or len(A[0]) != len(B[0]):
-		return Exception("Dim of matrix should be same!")
+		raise Exception("Dim of matrix should be same!")
 	rows_A = len(A)
 	cols_B = len(B[0])
-	ans = A.copy()
+	ans = [[0 for row in range(cols_B)] for col in range(rows_A)]
 	for i in range(rows_A):
 		for j in range(cols_B):
-			ans[i][j] -= B[i][j]
+			ans[i][j] = A[i][j] - B[i][j]
 	return ans
 
 def multmc(A, c):
@@ -145,10 +150,10 @@ def multmc(A, c):
 		return []
 	rows_A = len(A)
 	cols_A = len(A[0])
-	ans = A.copy()
-	for i in range(cols_A):
-		for j in range(rows_A):
-			ans[i][j] *= c
+	ans = [[0 for col in range(cols_A)] for row in range(rows_A)]
+	for i in range(rows_A):
+		for j in range(cols_A):
+			ans[i][j] = A[i][j] * c
 	return ans
 
 def multmv(A, V):
@@ -156,13 +161,13 @@ def multmv(A, V):
 		return []
 	rows_A = len(A)
 	cols_A = len(A[0])
-	row_V = len(V)
-	if cols_A != row_V:
-		return Exception("Cannot multiply the matrix and vector. Incorrect dimensions.")
-	ans = A.copy()
+	rows_V = len(V)
+	if cols_A != rows_V:
+		raise Exception("Cannot multiply the matrix and vector. Incorrect dimensions.")
+	ans = [0 for row in range(rows_A)]
 	for i in range(rows_A):
 		for j in range(cols_A):
-			ans[i][j] *= V[j]
+			ans[i] += A[i][j] * V[j]
 	return ans
 
 def multmm(A, B):
@@ -173,7 +178,7 @@ def multmm(A, B):
 	rows_B = len(B)
 	cols_B = len(B[0])
 	if cols_A != rows_B:
-		return Exception("Cannot multiply the two matrices. Incorrect dimensions.")
+		raise Exception("Cannot multiply the two matrices. Incorrect dimensions.")
 	ans = [[0 for row in range(cols_B)] for col in range(rows_A)]
 	for i in range(rows_A):
 		for j in range(cols_B):
@@ -186,7 +191,7 @@ def transpm(A):
 		return []
 	rows_A = len(A)
 	cols_A = len(A[0])
-	ans = [[0 for row in range(cols_A)] for col in range(rows_A)]
+	ans = [[0 for row in range(rows_A)] for col in range(cols_A)]
 	for i in range(rows_A):
 		for j in range(cols_A):
 			ans[j][i] = A[i][j]
@@ -207,6 +212,8 @@ def detm(m):
 
 def invm(m):
 	determinant = detm(m)
+	if determinant < 1e-6:
+		raise Exception("Determinant of a matrix is zero!")
 	#special case for 2x2 matrix:
 	if len(m) == 2:
 		return [[m[1][1]/determinant, -1*m[0][1]/determinant],
@@ -226,7 +233,102 @@ def invm(m):
 	return cofactors
 
 def LeastSquareMethod(A, y):
-	return multmm(invm(multmm(transpm(A), A)), multmv(transpm(A), y))
+	AT = transpm(A)
+	AInv = invm(multmm(AT, A))
+	return multmv(AInv, multmv(AT, y))
+
+def SGD(A, y):
+	W = [1. for row in range(len(y))]
+	step = 1e-4
+	h = 1e-4
+	L = 0
+	Lnew = MSE(W, A, y)
+	while abs(L - Lnew)>1e-3:
+		for i in range(len(y)):
+			L = Lnew
+			Wn = W.copy()
+			Wn[i] += h
+			tmp = MSE(Wn, A, y)
+			W[i] -= step*tmp
+			Lnew = MSE(W, A, y)
+	return W
+
+def AdaGrad(A, y):
+	W = [1. for row in range(len(y))]
+	step = 1e-4
+	h = 1e-4
+	L = 0
+	Lnew = MSE(W, A, y)
+	Gnii = [0 for i in range(len(y))]
+	for i in range(len(y)):
+		Wn = W.copy()
+		Wn[i] += h
+		Gnii[i] = MSE(Wn, A, y)**2
+	while abs(L - Lnew) > 1e-3:
+		L = Lnew
+		for i in range(len(y)):
+			Wn = W.copy()
+			Wn[i] += h
+			tmp = MSE(Wn, A, y)
+			Gnii[i] += tmp**2
+			W[i] -= step*tmp/math.sqrt(Gnii[i] + h)
+		Lnew = MSE(W, A, y)
+	return W
+
+def RMSProp(A, y, gamma=0.9):
+	W = [1. for row in range(len(y))]
+	step = 1e-4
+	h = 1e-4
+	L = 0
+	Lnew = MSE(W, A, y)
+	Eg = 0
+	Wn = sumvc(W, h)
+	tmp = 0
+	tmpnew = MSE(Wn, A, y)
+	Eg = gamma*(tmp**2) + (1-gamma)*(tmp**2)
+	W = subvc(W, step*tmp/math.sqrt(Eg + h))
+	L = Lnew
+	Lnew = MSE(W, A, y)
+	while abs(L - Lnew)>1e-3:
+		L = Lnew
+		tmp = tmpnew
+		Wn = sumvc(W, h)
+		tmpnew = MSE(Wn, A, y)
+		Eg = gamma*(tmp**2) + (1-gamma)*(tmpnew**2)
+		W = subvc(W, step*tmpnew/math.sqrt(Eg + h))
+		Lnew = MSE(W, A, y)
+	return W
+
+def Adam(A, y, gamma=0.9, beta=[0.9, 0.9]):
+	W = [1. for row in range(len(y))]
+	step = 1e-4
+	h = 1e-4
+	L = 0
+	Lnew = MSE(W, A, y)
+	Wn = sumvc(W, h)
+	tmp = MSE(Wn, A, y)
+	mt = beta[0]*0 + (1-beta[0])*tmp
+	_mt = mt/(1-beta[0])
+	vt = beta[1]*0 + (1-beta[1])*(tmp**2)
+	_vt = vt/(1-beta[1])
+	W = subvc(W, step*_mt/math.sqrt(_vt + h))
+	L = Lnew
+	Lnew = MSE(W, A, y)
+	while abs(L - Lnew)>1e-3:
+		L = Lnew
+		Wn = sumvc(W, h)
+		tmp = MSE(Wn, A, y)
+		mt = beta[0]*mt + (1-beta[0])*tmp
+		_mt = mt/(1-beta[0])
+		vt = vt
+		vt = beta[1]*vt + (1-beta[1])*(tmp**2)
+		_vt = vt/(1-beta[1])
+		W = subvc(W, step*_mt/math.sqrt(_vt + h))
+		Lnew = MSE(W, A, y)
+	return W
+
+def quadv(V):
+	return multvv(V, V)
 
 def PolynomRegression(W, X):
 	col_X = len(X)
@@ -240,17 +342,35 @@ def PolynomRegression(W, X):
 def MSE(W, X, Y):
 	if len(X) != len(W) or len(X) != len(Y) or len(Y) != len(W):
 		return Exception("Len of vectors should be same!")
-	return (subvv(multvv(W, X), Y)**2)/len(W)
+	ans = 0
+	for i in range(len(X)):
+		ans += (W[i]*X[i] - Y[i])**2
+	return sum(ans)/len(W)
 
 # minimize
 def MSE_l1(W, X, Y, alpha):
 	if len(X) != len(W) or len(X) != len(Y) or len(Y) != len(W):
 		return Exception("Len of vectors should be same!")
-	return (subvv(multvv(W, X), Y)**2)/len(W) + alpha*norm(W)
+	ans = 0
+	for i in range(len(X)):
+		ans += (W[i]*X[i] - Y[i])**2
+	return (sum(ans) + alpha*norm(W))/len(W)
 
 # minimize
 def MSE_l2(W, X, Y, alpha):
 	if len(X) != len(W) or len(X) != len(Y) or len(Y) != len(W):
 		return Exception("Len of vectors should be same!")
-	return (subvv(multvv(W, X), Y)**2)/len(W) + alpha*(norm(W)**2)
+		ans = 0
+	for i in range(len(X)):
+		ans += (W[i]*X[i] - Y[i])**2
+	return (sum(ans) + alpha*(norm(W)**2))/len(W)
+
+test_data = [7., 1., 1903., 14., 0., 1., 67., 1., 78., 0., 0.]
+
+try:
+	W = LeastSquareMethod(useful_data_X[:10], useful_data_Y[:10])
+	print(W)
+	print(PolynomRegression(W, test_data))
+except Exception as e:
+	print(e)
 
