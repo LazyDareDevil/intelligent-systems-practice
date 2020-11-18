@@ -21,8 +21,6 @@ with open(data_folder+'2017.csv', newline='\n') as csv_file:
 			airline_delay_causes.append(row)
 			line_count += 1
 
-# print(columns)
-
 target = 11
 # features = [1, 2, 9, 10, 12, 17, 19, 25, 26, 27, 28, 29]
 # features = [9, 10, 12, 25, 27, 29]
@@ -54,100 +52,106 @@ def LeastSquareMethod(A, y):
 	AInv = np.linalg.inv(np.matmul(AT, A))
 	return np.matmul(AInv, np.matmul(AT, y))
 
-def grad(fun, h, W, X, Y):
+def grad(method, h, W, X, Y, alpha):
 	col_X = len(X[0])
 	ans = [0 for i in range(col_X)]
 	Wn = W.copy()
 	for i in range(col_X):
 		Wn[i] += h
-		ans[i] = (MSE(Wn, X, Y) - MSE(W, X, Y))/h
+		ans[i] = (method(Wn, X, Y, alpha) - method(W, X, Y, alpha))/h
 		Wn[i] -= h
 	return np.array(ans)
 
-def SGD(A, y):
+def SGD(method, A, y, alpha=None, beta=None, gamma=None):
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
 	step = 1e-4
 	h = 1e-4
 	L = 0
-	Lnew = MSE(W, A, y)
+	Lnew = method(W, A, y, alpha)
 	while abs(L - Lnew) > 1e-3:
 		for j in range(len(A)) :
 			L = Lnew
-			W -= step * grad(MSE, h, W, [A[j]], [y[j]])
+			W -= step * grad(method, h, W, [A[j]], [y[j]], alpha)
 			Lnew = MSE(W, A, y)
 	return np.array(W)
 
-def AdaGrad(A, y):
+def AdaGrad(method, A, y, alpha=None, beta=None, gamma=None):
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
 	step = 1e-2
 	h = 1e-2
 	eps = 1
-	L = MSE(W, A, y)
+	L = method(W, A, y, alpha)
 	Gnii = [0 for i in range(col_A)]
-	temp = grad(MSE, h, W, A, y)
+	temp = grad(method, h, W, A, y, alpha)
 	for i in range(col_A):
 		Gnii[i] = (temp[i])**2
 		W[i] -= step*temp[i]/math.sqrt(Gnii[i] + eps)
 	Lnew = MSE(W, A, y)
 	while abs(L - Lnew) > 1:
 		L = Lnew
-		temp = grad(MSE, h, W, A, y)
+		temp = grad(method, h, W, A, y, alpha)
 		for i in range(col_A):
 			Gnii[i] += (temp[i])**2
 			W[i] -= step*temp[i]/math.sqrt(Gnii[i] + eps)
-		Lnew = MSE(W, A, y)
+		Lnew = method(W, A, y, alpha)
 	return np.array(W)
 
-def RMSProp(A, y, gamma=0.5):
+def RMSProp(method, A, y, alpha=None, beta=None, gamma=0.9):
+	if gamma is None:
+		gamma=0.9
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
 	step = 1e-3
 	h = 1e-3
 	eps = 1e-2
-	L = MSE(W, A, y)
+	L = method(W, A, y, alpha)
 	Eg = 0
 	tmp = 0
-	tmpnew = grad(MSE, h, W, A, y)
+	tmpnew = grad(method, h, W, A, y, alpha)
 	Eg = gamma*(tmp**2) + (1-gamma)*(tmpnew**2)
 	W -= step * tmpnew / np.sqrt(Eg + eps)
-	Lnew = MSE(W, A, y)
+	Lnew = method(W, A, y, alpha)
 	while abs(L - Lnew) > 1e-1:
 		L = Lnew
 		tmp = tmpnew
-		tmpnew = grad(MSE, h, W, A, y)
+		tmpnew = grad(method, h, W, A, y, alpha)
 		Eg = gamma*(tmp**2) + (1-gamma)*(tmpnew**2)
 		W -= step*tmpnew/np.sqrt(Eg + eps)
-		Lnew = MSE(W, A, y)
+		Lnew = method(W, A, y, alpha)
 	return np.array(W)
 
-def Adam(A, y, gamma=0.9, beta=[0.95, 0.95]):
+def Adam(method, A, y, alpha=None, beta=[0.95, 0.95], gamma=0.9):
+	if beta is None:
+		beta=[0.95, 0.95]
+	if gamma is None:
+		gamma=0.9
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
 	step = 1e-3
 	h = 1e-3
 	eps = 1e-2
 	L = 0
-	Lnew = MSE(W, A, y)
-	tmp = grad(MSE, h, W, A, y)
+	Lnew = method(W, A, y, alpha)
+	tmp = grad(method, h, W, A, y, alpha)
 	mt = beta[0]*0 + (1-beta[0])*tmp
 	_mt = mt/(1-beta[0])
 	vt = beta[1]*0 + (1-beta[1])*(tmp**2)
 	_vt = vt/(1-beta[1])
 	W = W - step*_mt/np.sqrt(_vt + eps)
 	L = Lnew
-	Lnew = MSE(W, A, y)
+	Lnew = method(W, A, y, alpha)
 	while abs(L - Lnew) > 1e-2:
 		L = Lnew
-		tmp = grad(MSE, h, W, A, y)
+		tmp = grad(method, h, W, A, y, alpha)
 		mt = beta[0]*mt + (1-beta[0])*tmp
 		_mt = mt/(1-beta[0])
 		vt = vt
 		vt = beta[1]*vt + (1-beta[1])*(tmp**2)
 		_vt = vt/(1-beta[1])
 		W = W - step*_mt/np.sqrt(_vt + eps)
-		Lnew = MSE(W, A, y)
+		Lnew = method(W, A, y, alpha)
 	return np.array(W)
 
 
@@ -175,7 +179,7 @@ def R2(W, X, Y):
 	SStot /= len(Y)
 	return 1 - (SSreg / SStot)
 
-def MSE(W, X, Y):
+def MSE(W, X, Y, alpha=None):
 	if len(X[0]) != len(W) or len(X) != len(Y):
 		raise Exception("Len of vectors should be same!")
 	ans = 0
@@ -199,39 +203,37 @@ def MSE_l2(W, X, Y, alpha):
 		ans += (np.dot(W, X[i]) - Y[i])**2
 	return (ans + alpha*(norm(W)**2))/len(W)
 
-# try:
+def CrossValidation(methodGD, methodReg, X, Y, alpha=None, beta=None, gamma=None, folds=5):
+	Wf = []
+	onefold = int(1000/folds)
+	for i in range(folds):
+		Wf.append(methodGD(methodReg, X[i*onefold: (i+1)*onefold], Y[i*onefold: (i+1)*onefold], alpha, beta, gamma))
+	W = sum(Wf)/len(Wf)
+	W = SGD(MSE_l1, data_train_features[:1000], data_train_target[:1000], alpha)
+	print("\nW " + str(methodGD) + " (" + str(methodReg.__name__) + ") = ", W)
+	print(str(methodGD.__name__) + " MSE (train) = ", methodReg(W, data_train_features[:1000], data_train_target[:1000], alpha))
+	print(str(methodGD.__name__) + " R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
+	print(str(methodGD.__name__) + " MSE (test) = ", methodReg(W, data_train_features[1000:2000], data_train_target[1000:2000], alpha))
+	print(str(methodGD.__name__) + " R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+
+
 W = LeastSquareMethod(data_train_features[:1000], data_train_target[:1000])
 print("\nW (LSM) = ", W)
 print("LSM MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
 print("LSM R2 (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
 print("LSM MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
 print("LSM R2 (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-# except Exception as e:
-# 	print(e)
-W = SGD(data_train_features[:1000], data_train_target[:1000])
-print("\nW (SGD) = ", W)
-print("SGD MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("SGD R2 (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("SGD MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("SGD R2 (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
- 
-W = AdaGrad(data_train_features[:1000], data_train_target[:1000])
-print("\nW (AdaGrad) = ", W)
-print("AdaGrad MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("AdaGrad R2(train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("AdaGrad MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("AdaGrad R2 (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
 
-W = RMSProp(data_train_features[:1000], data_train_target[:1000])
-print("\nW (RMSProp) = ", W)
-print("RMSProp MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("RMSProp R (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("RMSProp MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("RMSProp R2 (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+alpha = 0.8
 
-W = Adam(data_train_features[:1000], data_train_target[:1000])
-print("\nW (Adam) = ", W)
-print("Adam MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("Adam R (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("Adam MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("Adam R2 (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# CrossValidation(SGD, MSE_l1, data_train_features, data_train_target, alpha)
+# CrossValidation(SGD, MSE_l2, data_train_features, data_train_target, alpha)
+
+# CrossValidation(AdaGrad, MSE_l1, data_train_features, data_train_target, alpha)
+# CrossValidation(AdaGrad, MSE_l2, data_train_features, data_train_target, alpha)
+
+CrossValidation(RMSProp, MSE_l1, data_train_features, data_train_target, alpha)
+CrossValidation(RMSProp, MSE_l2, data_train_features, data_train_target, alpha)
+
+CrossValidation(Adam, MSE_l1, data_train_features, data_train_target, alpha)
+CrossValidation(Adam, MSE_l2, data_train_features, data_train_target, alpha)
