@@ -4,8 +4,8 @@ import math
 import random
 from copy import copy, deepcopy
 
-# data_folder = "linear_regression/data/"
-data_folder = "data/"
+data_folder = "linear_regression/data/"
+# data_folder = "data/"
 
 airline_delay_causes = []
 columns = []
@@ -98,8 +98,8 @@ def SGD(A, y):
 def AdaGrad(A, y):
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
-	step = 1e-3
-	h = 1e-3
+	step = 1e-1
+	h = 1e-2
 	eps = 1
 	L = MSE(W, A, y)
 	Gnii = [0 for i in range(col_A)]
@@ -108,8 +108,8 @@ def AdaGrad(A, y):
 		Gnii[i] = (temp[i])**2
 		W[i] -= step*temp[i]/math.sqrt(Gnii[i] + eps)
 	Lnew = MSE(W, A, y)
-	num_steps = 100
-	while abs(L - Lnew) > 1e-2 or num_steps > 0:
+	num_steps = 2500
+	while abs(L - Lnew) > 1e-1 and num_steps > 0:
 		L = Lnew
 		temp = grad(MSE, h, W, A, y)
 		for i in range(col_A):
@@ -124,7 +124,7 @@ def RMSProp(A, y, gamma=0.5):
 	W = np.array([1. for row in range(col_A)])
 	step = 1e-3
 	h = 1e-3
-	eps = 1e-2
+	eps = 1e-3
 	L = MSE(W, A, y)
 	Eg = 0
 	tmp = 0
@@ -132,8 +132,8 @@ def RMSProp(A, y, gamma=0.5):
 	Eg = gamma*(tmp**2) + (1-gamma)*(tmpnew**2)
 	W -= step * tmpnew / np.sqrt(Eg + eps)
 	Lnew = MSE(W, A, y)
-	num_steps = 100
-	while abs(L - Lnew) > 1e-2 or num_steps > 0:
+	num_steps = 3500
+	while abs(L - Lnew) > 1e-2 and num_steps > 0:
 		L = Lnew
 		tmp = tmpnew
 		tmpnew = grad(MSE, h, W, A, y)
@@ -146,9 +146,9 @@ def RMSProp(A, y, gamma=0.5):
 def Adam(A, y, gamma=0.9, beta=[0.95, 0.95]):
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
-	step = 1e-3
+	step = 1e-4
 	h = 1e-3
-	eps = 1e-2
+	eps = 1e-3
 	L = 0
 	Lnew = MSE(W, A, y)
 	tmp = grad(MSE, h, W, A, y)
@@ -159,13 +159,12 @@ def Adam(A, y, gamma=0.9, beta=[0.95, 0.95]):
 	W = W - step*_mt/np.sqrt(_vt + eps)
 	L = Lnew
 	Lnew = MSE(W, A, y)
-	num_steps = 100
-	while abs(L - Lnew) > 1e-3 or num_steps > 0:
+	num_steps = 4000
+	while abs(L - Lnew) > 1e-3 and num_steps > 0:
 		L = Lnew
 		tmp = grad(MSE, h, W, A, y)
 		mt = beta[0]*mt + (1-beta[0])*tmp
 		_mt = mt/(1-beta[0])
-		vt = vt
 		vt = beta[1]*vt + (1-beta[1])*(tmp**2)
 		_vt = vt/(1-beta[1])
 		W = W - step*_mt/np.sqrt(_vt + eps)
@@ -223,44 +222,44 @@ def MSE_l2(W, X, Y, alpha):
 	return (ans + alpha*(norm(W)**2))/len(W)
 
 
-W = LeastSquareMethod(data_train_features[:1000], data_train_target[:1000])
-print("\nW (LSM) = ", W)
-print("LSM MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("LSM R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("LSM MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("LSM R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-
-W = LeastSquareMethod_GD(data_train_features[:1000], data_train_target[:1000])
-print("\nW (LSM GD) = ", W)
-print("LSM GD MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("LSM GD R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("LSM GD MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("LSM GD R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-
-W = SGD(data_train_features[:1000], data_train_target[:1000])
-print("\nW (SGD) = ", W)
-print("SGD MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("SGD R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("SGD MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("SGD R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
- 
+# W = LeastSquareMethod(data_train_features[:1000], data_train_target[:1000])
+# print("\nW (LSM) = ", W)
+# print("LSM MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
+# print("LSM R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
+# print("LSM MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# print("LSM R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# 
+# W = LeastSquareMethod_GD(data_train_features[:1000], data_train_target[:1000])
+# print("\nW (LSM GD) = ", W)
+# print("LSM GD MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
+# print("LSM GD R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
+# print("LSM GD MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# print("LSM GD R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# 
+# W = SGD(data_train_features[:1000], data_train_target[:1000])
+# print("\nW (SGD) = ", W)
+# print("SGD MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
+# print("SGD R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
+# print("SGD MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# print("SGD R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# 
 W = AdaGrad(data_train_features[:1000], data_train_target[:1000])
 print("\nW (AdaGrad) = ", W)
 print("AdaGrad MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
 print("AdaGrad R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
 print("AdaGrad MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
 print("AdaGrad R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-
-W = RMSProp(data_train_features[:1000], data_train_target[:1000])
-print("\nW (RMSProp) = ", W)
-print("RMSProp MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("RMSProp R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("RMSProp MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("RMSProp R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-
-W = Adam(data_train_features[:1000], data_train_target[:1000])
-print("\nW (Adam) = ", W)
-print("Adam MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
-print("Adam R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
-print("Adam MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
-print("Adam R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# 
+# W = RMSProp(data_train_features[:1000], data_train_target[:1000])
+# print("\nW (RMSProp) = ", W)
+# print("RMSProp MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
+# print("RMSProp R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
+# print("RMSProp MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# print("RMSProp R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# 
+# W = Adam(data_train_features[:1000], data_train_target[:1000])
+# print("\nW (Adam) = ", W)
+# print("Adam MSE (train) = ", MSE(W, data_train_features[:1000], data_train_target[:1000]))
+# print("Adam R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
+# print("Adam MSE (test) = ", MSE(W, data_train_features[1000:2000], data_train_target[1000:2000]))
+# print("Adam R2  (test) = ", R2(W, data_train_features[1000:2000], data_train_target[1000:2000]))
