@@ -3,7 +3,8 @@ import numpy as np
 import math 
 import random
 
-data_folder = "linear_regression/data/"
+# data_folder = "linear_regression/data/"
+data_folder = "data/"
 
 airline_delay_causes = []
 columns = []
@@ -65,11 +66,11 @@ def grad(method, h, W, X, Y, alpha):
 def SGD(method, A, y, alpha=None, beta=None, gamma=None):
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
-	step = 1e-4
-	h = 1e-4
+	step = 1e-6
+	h = 1e-6
 	L = 0
 	Lnew = method(W, A, y, alpha)
-	while abs(L - Lnew) > 1e-3:
+	while abs(L - Lnew) > 100:
 		for j in range(len(A)) :
 			L = Lnew
 			W -= step * grad(method, h, W, [A[j]], [y[j]], alpha)
@@ -79,8 +80,8 @@ def SGD(method, A, y, alpha=None, beta=None, gamma=None):
 def AdaGrad(method, A, y, alpha=None, beta=None, gamma=None):
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
-	step = 1e-2
-	h = 1e-2
+	step = 1
+	h = 1
 	eps = 1
 	L = method(W, A, y, alpha)
 	Gnii = [0 for i in range(col_A)]
@@ -103,8 +104,8 @@ def RMSProp(method, A, y, alpha=None, beta=None, gamma=0.9):
 		gamma=0.9
 	col_A = len(A[0])
 	W = np.array([1. for row in range(col_A)])
-	step = 1e-3
-	h = 1e-3
+	step = 1e-2
+	h = 1e-2
 	eps = 1e-2
 	L = method(W, A, y, alpha)
 	Eg = 0
@@ -113,7 +114,7 @@ def RMSProp(method, A, y, alpha=None, beta=None, gamma=0.9):
 	Eg = gamma*(tmp**2) + (1-gamma)*(tmpnew**2)
 	W -= step * tmpnew / np.sqrt(Eg + eps)
 	Lnew = method(W, A, y, alpha)
-	while abs(L - Lnew) > 1e-1:
+	while abs(L - Lnew) > 1:
 		L = Lnew
 		tmp = tmpnew
 		tmpnew = grad(method, h, W, A, y, alpha)
@@ -207,9 +208,10 @@ def CrossValidation(methodGD, methodReg, X, Y, alpha=None, beta=None, gamma=None
 	Wf = []
 	onefold = int(1000/folds)
 	for i in range(folds):
-		Wf.append(methodGD(methodReg, X[i*onefold: (i+1)*onefold], Y[i*onefold: (i+1)*onefold], alpha, beta, gamma))
+		print(i*onefold, " ", (i+1)*onefold)
+		Wf.append(methodGD(methodReg, np.concatenate((X[:i*onefold], X[(i+1)*onefold:])), 
+									  np.concatenate((Y[:i*onefold], Y[(i+1)*onefold:])), alpha, beta, gamma))
 	W = sum(Wf)/len(Wf)
-	W = SGD(MSE_l1, data_train_features[:1000], data_train_target[:1000], alpha)
 	print("\nW " + str(methodGD) + " (" + str(methodReg.__name__) + ") = ", W)
 	print(str(methodGD.__name__) + " MSE (train) = ", methodReg(W, data_train_features[:1000], data_train_target[:1000], alpha))
 	print(str(methodGD.__name__) + " R2  (train) = ", R2(W, data_train_features[:1000], data_train_target[:1000]))
@@ -226,14 +228,14 @@ print("LSM R2 (test) = ", R2(W, data_train_features[1000:2000], data_train_targe
 
 alpha = 0.8
 
-# CrossValidation(SGD, MSE_l1, data_train_features, data_train_target, alpha)
-# CrossValidation(SGD, MSE_l2, data_train_features, data_train_target, alpha)
+CrossValidation(SGD, MSE_l1, data_train_features, data_train_target, alpha)
+CrossValidation(SGD, MSE_l2, data_train_features, data_train_target, alpha)
 
-# CrossValidation(AdaGrad, MSE_l1, data_train_features, data_train_target, alpha)
-# CrossValidation(AdaGrad, MSE_l2, data_train_features, data_train_target, alpha)
+CrossValidation(AdaGrad, MSE_l1, data_train_features, data_train_target, alpha)
+CrossValidation(AdaGrad, MSE_l2, data_train_features, data_train_target, alpha)
 
-CrossValidation(RMSProp, MSE_l1, data_train_features, data_train_target, alpha)
-CrossValidation(RMSProp, MSE_l2, data_train_features, data_train_target, alpha)
+CrossValidation(RMSProp, MSE_l1, data_train_features, data_train_target, alpha, gamma=0.95)
+CrossValidation(RMSProp, MSE_l2, data_train_features, data_train_target, alpha, gamma=0.95)
 
-CrossValidation(Adam, MSE_l1, data_train_features, data_train_target, alpha)
-CrossValidation(Adam, MSE_l2, data_train_features, data_train_target, alpha)
+CrossValidation(Adam, MSE_l1, data_train_features, data_train_target, alpha, beta=[0.8, 0.8])
+CrossValidation(Adam, MSE_l2, data_train_features, data_train_target, alpha, beta=[0.8, 0.8])
